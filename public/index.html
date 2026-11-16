@@ -1,0 +1,283 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction Management Dashboard</title>
+
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/js/dashboard.js" defer></script>
+</head>
+<body>
+
+<div class="layout">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="logo">
+            TM
+            <span>Transaction Manager</span>
+        </div>
+
+        <nav>
+            <a href="#dashboard" class="active">Dashboard</a>
+            <a href="#upload">Upload CSV</a>
+            <a href="#batches">Batches</a>
+            <a href="#audit">Audit Logs</a>
+        </nav>
+
+        <div class="sidebar-footer">Maker-Checker System</div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+        <!-- Header -->
+        <header class="topbar">
+            <div>
+                <h1>Transaction Dashboard</h1>
+                <p>Manage, validate and approve transactions</p>
+            </div>
+
+            <button class="refresh-btn" id="refreshBtn">
+                Refresh Data
+            </button>
+        </header>
+
+        <!-- Dashboard Summary -->
+        <section id="dashboard">
+            <div class="summary-grid">
+
+                <div class="summary-card">
+                    <p>Total Batches</p>
+                    <h2 id="totalBatches">0</h2>
+                </div>
+
+                <div class="summary-card">
+                    <p>Total Transactions</p>
+                    <h2 id="totalTransactions">0</h2>
+                </div>
+
+                <div class="summary-card pending-card">
+                    <p>Pending Transactions</p>
+                    <h2 id="pendingTransactions">0</h2>
+                </div>
+
+                <div class="summary-card authorized-card">
+                    <p>Authorized Transactions</p>
+                    <h2 id="authorizedTransactions">0</h2>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- CSV Upload -->
+        <section class="panel" id="upload">
+
+            <div class="section-heading">
+                <div>
+                    <h2>Upload Transactions</h2>
+                    <p>Upload your CSV file to validate and process transactions.</p>
+                </div>
+            </div>
+
+            <form id="uploadForm">
+
+                <div class="upload-area">
+                    <input
+                        type="file"
+                        id="csvFile"
+                        accept=".csv"
+                        required
+                    >
+
+                    <p>Select a CSV file to upload</p>
+                    <small>Only CSV files are allowed</small>
+                </div>
+
+                <button type="submit" id="uploadBtn">
+                    Upload CSV
+                </button>
+
+                <button type="button" id="clearFileBtn">
+                    Clear File
+                </button>
+
+            </form>
+
+            <div id="uploadResult" class="result-box hidden"></div>
+
+        </section>
+
+        <!-- Batch Management -->
+        <section class="panel" id="batches">
+
+            <div class="section-heading">
+                <div>
+                    <h2>Batch Management</h2>
+                    <p>View uploaded batches and their approval status.</p>
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Batch ID</th>
+                            <th>Total Transactions</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="batchTable">
+                        <tr>
+                            <td colspan="5">Loading batches...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </section>
+
+        <!-- Transaction Details -->
+        <section class="panel" id="batchDetails">
+
+            <div class="section-heading">
+                <div>
+                    <h2>Transaction Details</h2>
+                    <p id="selectedBatchText">
+                        Select a batch to view its transactions.
+                    </p>
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Transaction ID</th>
+                            <th>Account Number</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="transactionTable">
+                        <tr>
+                            <td colspan="4">No batch selected.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </section>
+
+        <!-- Audit Logs -->
+        <section class="panel" id="audit">
+
+            <div class="section-heading">
+                <div>
+                    <h2>Audit Logs</h2>
+                    <p>Track successful uploads, failed uploads and approval activities.</p>
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Action</th>
+                            <th>Batch ID</th>
+                            <th>Performed By</th>
+                            <th>Date</th>
+                            <th>Error Details</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="auditTable">
+                        <tr>
+                            <td colspan="5">Loading audit logs...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </section>
+
+    </main>
+</div>
+
+<!-- Failed Upload Details Modal -->
+<div id="auditModal" class="modal hidden">
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+            <h2>Upload Error Details</h2>
+
+            <button type="button" id="closeAuditModal">
+                ×
+            </button>
+        </div>
+
+        <div id="auditModalBody"></div>
+
+    </div>
+
+</div>
+
+<!-- Checker Name Approval Modal -->
+<div id="approvalModal" class="approval-modal">
+
+    <div class="approval-modal-content">
+
+        <div class="modal-header">
+            <h2>Confirm Batch Approval</h2>
+
+            <button type="button" id="closeApprovalModal">
+                ×
+            </button>
+        </div>
+
+        <form id="approvalForm">
+
+            <p>Please enter your name to approve this batch.</p>
+
+            <div class="approval-input-group">
+                <label for="checkerName">Checker Name</label>
+
+                <input
+                    type="text"
+                    id="checkerName"
+                    placeholder="Enter your name"
+                    maxlength="100"
+                    required
+                >
+            </div>
+
+            <div class="modal-actions">
+
+                <button type="submit" id="confirmApprovalBtn">
+                    Confirm Approval
+                </button>
+
+                <button type="button" id="cancelApprovalBtn">
+                    Cancel
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+<!-- Toast Notification -->
+<div id="toast" class="toast"></div>
+
+</body>
+</html>
