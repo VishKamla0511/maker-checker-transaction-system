@@ -24,6 +24,7 @@ const parseCsv = (buffer) => {
     return new Promise((resolve, reject) => {
         const rows = [];
         const parser = csv();
+        let isInvalidHeaders = false;
 
         parser.on("headers", (headers) => {
             const normalizedHeaders = headers.map(header =>
@@ -34,16 +35,19 @@ const parseCsv = (buffer) => {
                 header => !normalizedHeaders.includes(header)
             );
 
-            if (missingHeaders.length) {
-                parser.destroy(
-                    new Error(
-                        `Missing columns: ${missingHeaders.join(", ")}`
-                    )
+            if (missingHeaders.length > 0) {
+                isInvalidHeaders = true;
+                const error = new Error(
+                    `Missing columns: ${missingHeaders.join(", ")}`
                 );
+                error.statusCode = 400;
+                reject(error);
+                parser.destroy();
             }
         });
 
         parser.on("data", (row) => {
+            if (isInvalidHeaders) return;
             const formattedRow = {};
 
             Object.keys(row).forEach(key => {
@@ -53,11 +57,18 @@ const parseCsv = (buffer) => {
             rows.push(formattedRow);
         });
 
-        parser.on("error", reject);
+        parser.on("error", (error) => {
+            if (!isInvalidHeaders) {
+                reject(error);
+            }
+        });
 
         parser.on("end", () => {
+            if (isInvalidHeaders) return;
             if (!rows.length) {
-                return reject(new Error("CSV contains no records"));
+                const error = new Error("CSV contains no records");
+                error.statusCode = 400;
+                return reject(error);
             }
 
             resolve(rows);

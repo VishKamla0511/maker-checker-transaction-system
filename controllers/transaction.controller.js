@@ -17,7 +17,10 @@ const uploadCsv = async (req, res, next) => {
         return res.status(result.success ? 201 : 400).json(result);
 
     } catch (error) {
-        next(error);
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message || "Internal Server Error"
+        });
     }
 };
 
